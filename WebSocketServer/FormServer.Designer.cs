@@ -1,4 +1,4 @@
-﻿namespace WebSocketServer
+﻿namespace WebSocketServerTest
 {
     partial class FormServer
     {
@@ -30,6 +30,8 @@
         {
             this.buttonWait = new System.Windows.Forms.Button();
             this.textBoxOut = new System.Windows.Forms.TextBox();
+            this.buttonClose = new System.Windows.Forms.Button();
+            this.buttonDisconnect = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // buttonWait
@@ -53,11 +55,33 @@
             this.textBoxOut.Size = new System.Drawing.Size(259, 206);
             this.textBoxOut.TabIndex = 1;
             // 
+            // buttonClose
+            // 
+            this.buttonClose.Location = new System.Drawing.Point(95, 13);
+            this.buttonClose.Name = "buttonClose";
+            this.buttonClose.Size = new System.Drawing.Size(75, 23);
+            this.buttonClose.TabIndex = 2;
+            this.buttonClose.Text = "受付終了";
+            this.buttonClose.UseVisualStyleBackColor = true;
+            this.buttonClose.Click += new System.EventHandler(this.buttonClose_Click);
+            // 
+            // buttonDisconnect
+            // 
+            this.buttonDisconnect.Location = new System.Drawing.Point(177, 13);
+            this.buttonDisconnect.Name = "buttonDisconnect";
+            this.buttonDisconnect.Size = new System.Drawing.Size(75, 23);
+            this.buttonDisconnect.TabIndex = 3;
+            this.buttonDisconnect.Text = "切断";
+            this.buttonDisconnect.UseVisualStyleBackColor = true;
+            this.buttonDisconnect.Click += new System.EventHandler(this.buttonDisconnect_Click);
+            // 
             // FormServer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Controls.Add(this.buttonDisconnect);
+            this.Controls.Add(this.buttonClose);
             this.Controls.Add(this.textBoxOut);
             this.Controls.Add(this.buttonWait);
             this.Name = "FormServer";
@@ -71,6 +95,8 @@
 
         private System.Windows.Forms.Button buttonWait;
         private System.Windows.Forms.TextBox textBoxOut;
+        private System.Windows.Forms.Button buttonClose;
+        private System.Windows.Forms.Button buttonDisconnect;
     }
 }
 

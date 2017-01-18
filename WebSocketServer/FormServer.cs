@@ -1,17 +1,17 @@
-﻿using System;
+﻿using SuperSocket.SocketBase.Config;
+using SuperWebSocket;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Net;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace WebSocketServer
+namespace WebSocketServerTest
 {
     public partial class FormServer : Form
     {
@@ -20,78 +20,91 @@ namespace WebSocketServer
             InitializeComponent();
         }
 
-        private async void buttonWait_Click(object sender, EventArgs e)
+        private void update()
         {
-            var listener = new HttpListener();
-            listener.Prefixes.Add("http://127.0.0.1:30304/");
-            listener.Start();
-
-            while (true)
+            textBoxOut.Text = "";
+            var i = 1;
+            foreach (var client in clients)
             {
-                var context = await listener.GetContextAsync();
-                if (context.Request.IsWebSocketRequest)
-                {
-                    var wsContext = await context.AcceptWebSocketAsync(null);
-                    var ws = wsContext.WebSocket;
-                    processClient(ws);
-                }
-                else
-                {
-                    context.Response.StatusCode = 400;
-                    context.Response.Close();
-                }
+                textBoxOut.Text += string.Format("{0:D2} : {1}" + Environment.NewLine,
+                    i++,
+                    client.Value == null ? "(not received)" : "\"" + client.Value + "\"");
             }
         }
 
-        private HashSet<WebSocket> clients = new HashSet<WebSocket>();
+        private delegate void updateDelegate();
 
-        private async void processClient(WebSocket ws)
+        private WebSocketServer server;
+        private bool opened = false;
+
+        private void buttonWait_Click(object sender, EventArgs e)
         {
-            clients.Add(ws);
-
-            await ws.SendAsync
-            (
-                new ArraySegment<byte>(Encoding.UTF8.GetBytes("Hello!")),
-                WebSocketMessageType.Text,
-                true,
-                CancellationToken.None
-            );
-
-            while (ws.State == WebSocketState.Open)
+            if (server != null)
             {
-                try
-                {
-                    var buff = new ArraySegment<byte>(new byte[1024]);
-                    var ret = await ws.ReceiveAsync(buff, CancellationToken.None);
-                    if (ret.MessageType == WebSocketMessageType.Close)
-                    {
-                        break;
-                    }
-                    else if (ret.MessageType == WebSocketMessageType.Text)
-                    {
-                        Parallel.ForEach(clients, async client =>
-                        {
-                            await client.SendAsync
-                            (
-                                new ArraySegment<byte>(buff.Take(ret.Count).ToArray()),
-                                WebSocketMessageType.Text,
-                                true,
-                                CancellationToken.None
-                            );
-                        });
-                    }
-                    else if (ret.MessageType == WebSocketMessageType.Binary)
-                    {
-                    }
-                }
-                catch
-                {
-                    break;
-                }
+                opened = true;
+                return;
             }
 
-            clients.Remove(ws);
-            ws.Dispose();
+            server = new WebSocketServer();
+            var rootConfig = new RootConfig();
+            var serverConfig = new ServerConfig()
+            {
+                Ip = "Any",
+                Port = 30304,
+                MaxConnectionNumber = 5,
+                Mode = SuperSocket.SocketBase.SocketMode.Tcp,
+                Name = "WebSocket Test Server"
+            };
+
+            server.NewSessionConnected += s =>
+            {
+                if (opened)
+                {
+                    clients.Add(s, null);
+                    Invoke(new updateDelegate(update));
+                }
+                else
+                {
+                    s.Close(SuperSocket.SocketBase.CloseReason.ServerClosing);
+                }
+            };
+            server.SessionClosed += (s, reason) =>
+            {
+                clients.Remove(s);
+                Invoke(new updateDelegate(update));
+            };
+            server.NewMessageReceived += (s, message) =>
+            {
+                clients[s] = message;
+                Invoke(new updateDelegate(update));
+                Parallel.ForEach(clients, c =>
+                {
+                    c.Key.Send(new ArraySegment<byte>(Encoding.UTF8.GetBytes(message)));
+                });
+            };
+
+            server.Setup(rootConfig, serverConfig);
+
+            opened = true;
+            server.Start();
+        }
+
+        private Dictionary<WebSocketSession, string> clients = new Dictionary<WebSocketSession, string>();
+
+        private void buttonClose_Click(object sender, EventArgs e)
+        {
+            opened = false;
+        }
+
+        private void buttonDisconnect_Click(object sender, EventArgs e)
+        {
+            Parallel.ForEach(clients, c =>
+            {
+                c.Key.CloseWithHandshake("Goodbye.");
+            });
+
+            server.Stop();
+            update();
         }
     }
 }

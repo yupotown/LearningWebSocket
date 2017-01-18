@@ -20,7 +20,7 @@ namespace WebSocketClient
             InitializeComponent();
         }
 
-        private ClientWebSocket ws = new ClientWebSocket();
+        private ClientWebSocket ws;
 
         private void print(string text)
         {
@@ -31,27 +31,45 @@ namespace WebSocketClient
 
         private async void buttonConnect_Click(object sender, EventArgs e)
         {
-            if (ws.State != WebSocketState.Open)
+            try
             {
-                await ws.ConnectAsync(new Uri(textBoxUri.Text), CancellationToken.None);
-                while (ws.State == WebSocketState.Open)
+                if (ws == null)
                 {
-                    var buff = new ArraySegment<byte>(new byte[10]);
-                    var ret = await ws.ReceiveAsync(buff, CancellationToken.None);
-                    var text = Encoding.UTF8.GetString(buff.Take(ret.Count).ToArray());
-                    Invoke(new printDelegate(print), text);
+                    ws = new ClientWebSocket();
+                    await ws.ConnectAsync(new Uri(textBoxUri.Text), CancellationToken.None);
+                    while (ws != null && ws.State == WebSocketState.Open)
+                    {
+                        var buff = new ArraySegment<byte>(new byte[1024 * 16]);
+                        var ret = await ws.ReceiveAsync(buff, CancellationToken.None);
+                        var text = Encoding.UTF8.GetString(buff.Take(ret.Count).ToArray());
+                        Invoke(new printDelegate(print), text);
+                    }
                 }
+            }
+            finally
+            {
+                ws = null;
             }
         }
 
         private async void buttonSend_Click(object sender, EventArgs e)
         {
-            if (ws.State != WebSocketState.Open)
+            if (ws == null || ws.State != WebSocketState.Open)
             {
                 return;
             }
             var buff = new ArraySegment<byte>(Encoding.UTF8.GetBytes(textBoxMessage.Text));
             await ws.SendAsync(buff, WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        private async void buttonDisconnect_Click(object sender, EventArgs e)
+        {
+            if (ws == null)
+            {
+                return;
+            }
+            await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Goodbye.", CancellationToken.None);
+            ws = null;
         }
     }
 }

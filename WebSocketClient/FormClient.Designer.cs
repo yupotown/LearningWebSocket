@@ -33,6 +33,7 @@
             this.textBoxMessage = new System.Windows.Forms.TextBox();
             this.buttonSend = new System.Windows.Forms.Button();
             this.textBoxOut = new System.Windows.Forms.TextBox();
+            this.buttonDisconnect = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBoxUri
@@ -84,11 +85,22 @@
             this.textBoxOut.Size = new System.Drawing.Size(259, 124);
             this.textBoxOut.TabIndex = 4;
             // 
+            // buttonDisconnect
+            // 
+            this.buttonDisconnect.Location = new System.Drawing.Point(95, 39);
+            this.buttonDisconnect.Name = "buttonDisconnect";
+            this.buttonDisconnect.Size = new System.Drawing.Size(75, 23);
+            this.buttonDisconnect.TabIndex = 5;
+            this.buttonDisconnect.Text = "切断";
+            this.buttonDisconnect.UseVisualStyleBackColor = true;
+            this.buttonDisconnect.Click += new System.EventHandler(this.buttonDisconnect_Click);
+            // 
             // FormClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Controls.Add(this.buttonDisconnect);
             this.Controls.Add(this.textBoxOut);
             this.Controls.Add(this.buttonSend);
             this.Controls.Add(this.textBoxMessage);
@@ -108,6 +120,7 @@
         private System.Windows.Forms.TextBox textBoxMessage;
         private System.Windows.Forms.Button buttonSend;
         private System.Windows.Forms.TextBox textBoxOut;
+        private System.Windows.Forms.Button buttonDisconnect;
     }
 }
 
